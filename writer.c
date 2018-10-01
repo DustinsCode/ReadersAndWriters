@@ -70,6 +70,15 @@ void shutdown(char * shmPtr, int shmId){
 void sigHandler(int sigNum){
     printf("^C recieved.  Shutting down...");
     //TODO: detach the shared memory to prevent memory leakage.
-    
+    /* Josh added some helpful information here to help with closing the shared memory nicely 
+        the variables used can be figured out based off parameters :)
+    if (shmctl(shared_mem_id, IPC_STAT, &shm_struct) < 0) {
+        perror("Error filling out shm_struct");
+    }
+
+    if (shm_struct.shm_nattch == 0 && shmctl(shared_mem_id, IPC_RMID, &shm_struct) < 0) {
+        perror ("can't deallocate\n");
+        exit(1);
+    }
     exit(0);
 }
