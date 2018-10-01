@@ -22,7 +22,7 @@ key_t key;
 int main(){
     int shmId;
     char *shmPtr;
-    int sendFlag;                   //0 if not received 1 if received
+    int sendFlag = 0;                   //0 if not received 1 if received
 
     //Signal handler for nice shutdown
     signal(SIGINT, sigHandler);
@@ -37,6 +37,14 @@ int main(){
         exit(1);
     }
     printf("shmId: %u", shmId);
+
+    while(1){
+        //TODO: get user input
+        
+        //TODO: Put input into shmPtr and set flag to 0
+        
+        //TODO: wait for flag to equal 1
+    }
 
     if((shmPtr = shmat (shmId, 0,0)) == (void*) -1){
         perror("Can't attach\n");
