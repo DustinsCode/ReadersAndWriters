@@ -19,11 +19,20 @@ void sigHandler(int sigNum);
 key_t key;
 int shmId;
 char *shmPtr;
-int sendFlag = 0;                   //0 if not received 1 if received
 
+struct Token {
+    //if 0, message has not been read
+    //if 1, message has been read and memory is ready to be written to
+    int flag;
+    char message[1024];
+};
 
 int main(){
-        //Signal handler for nice shutdown
+    
+    //struct Token token;
+    struct Token *tok;
+    tok -> flag = 1;
+    //Signal handler for nice shutdown
     signal(SIGINT, sigHandler);
 
     if((key = ftok("key.txt", 'R'))== -1){          //not sure what the proj_id 'R' does, got it from stack overflow
@@ -31,27 +40,24 @@ int main(){
         exit(1);
     }
 
-    if((shmId = shmget(key, 1024, IPC_CREAT|S_IRUSR|S_IWUSR)) < 0){
+    if((shmId = shmget(key, sizeof(tok), IPC_CREAT|S_IRUSR|S_IWUSR)) < 0){
         perror("Error setting up shared memory\n");
         exit(1);
     }
-    printf("shmId: %u", shmId);
 
-    if((shmPtr = shmat (shmId, 0,0)) == (void*) -1){
-        perror("Can't attach\n");
-        exit(1);
-    }
- 
     while(1){
-        //TODO: get user input
-        char buff[1024];
-        printf(">");
-        fgets(buff, 1024, stdin);
-        strcpy(buff,shmPtr);
-        printf("%s\n", buff);
-        //TODO: Put input into shmPtr and set flag to 0
-        
-        //TODO: wait for flag to equal 1
+        if(tok -> flag == 1){
+            // get user input
+            printf(">");
+            fgets(tok -> message, 1024, stdin);
+            printf("%s\n", tok -> message);
+            //TODO: Put input into shmPtr and set flag to 0
+            tok -> flag= 0;
+            if((tok = shmat (shmId, NULL,0)) == (void*) -1){
+                perror("Can't attach\n");
+                exit(1);
+            }
+        }
     }
    printf("memory pointer: %lu \n", (unsigned long) shmPtr);
        return 0;
