@@ -12,19 +12,18 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #include <signal.h>
-
+#include <string.h>
 
 void sigHandler(int sigNum);
-void shutdown(char * shmPtr, int shmId);
 
 key_t key;
+int shmId;
+char *shmPtr;
+int sendFlag = 0;                   //0 if not received 1 if received
+
 
 int main(){
-    int shmId;
-    char *shmPtr;
-    int sendFlag = 0;                   //0 if not received 1 if received
-
-    //Signal handler for nice shutdown
+        //Signal handler for nice shutdown
     signal(SIGINT, sigHandler);
 
     if((key = ftok("key.txt", 'R'))== -1){          //not sure what the proj_id 'R' does, got it from stack overflow
@@ -38,20 +37,31 @@ int main(){
     }
     printf("shmId: %u", shmId);
 
-    while(1){
-        //TODO: get user input
-        
-        //TODO: Put input into shmPtr and set flag to 0
-        
-        //TODO: wait for flag to equal 1
-    }
-
     if((shmPtr = shmat (shmId, 0,0)) == (void*) -1){
         perror("Can't attach\n");
         exit(1);
     }
-    printf("memory pointer: %lu \n", (unsigned long) shmPtr);
-    if(shmdt(shmPtr) < 0 ){
+ 
+    while(1){
+        //TODO: get user input
+        char buff[1024];
+        printf(">");
+        fgets(buff, 1024, stdin);
+        strcpy(buff,shmPtr);
+        printf("%s\n", buff);
+        //TODO: Put input into shmPtr and set flag to 0
+        
+        //TODO: wait for flag to equal 1
+    }
+   printf("memory pointer: %lu \n", (unsigned long) shmPtr);
+       return 0;
+}
+
+
+void sigHandler(int sigNum){
+    printf(" recieved.  Shutting down...\n");
+    //TODO: detach the shared memory to prevent memory leakage.
+     if(shmdt(shmPtr) < 0 ){
         perror("error detaching\n");
         exit(1);
     }
@@ -60,16 +70,6 @@ int main(){
         exit(1);
     }
 
-    return 0;
-}
 
-void shutdown(char * shmPtr, int shmId){
-
-}
-
-void sigHandler(int sigNum){
-    printf("^C recieved.  Shutting down...");
-    //TODO: detach the shared memory to prevent memory leakage.
-    
     exit(0);
 }
