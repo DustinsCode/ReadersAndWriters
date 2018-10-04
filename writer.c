@@ -27,10 +27,11 @@ struct Token {
     char message[1024];
 };
 
+struct Token *tok;
+
 int main(){
     
-    //struct Token token;
-    struct Token *tok;
+    tok = malloc(sizeof(struct Token));
     tok -> flag = 1;
     //Signal handler for nice shutdown
     signal(SIGINT, sigHandler);
@@ -40,11 +41,18 @@ int main(){
         exit(1);
     }
 
-    if((shmId = shmget(key, sizeof(tok), IPC_CREAT|S_IRUSR|S_IWUSR)) < 0){
+    if((shmId = shmget(key, 4096, IPC_CREAT|S_IRUSR|S_IWUSR)) < 0){
         perror("Error setting up shared memory\n");
         exit(1);
     }
 
+
+    if((tok = shmat (shmId, 0, 0)) == (void*) -1){
+        perror("Can't attach\n");
+        exit(1);
+    }
+
+    printf("ID: %d\n", shmId);
     while(1){
         if(tok -> flag == 1){
             // get user input
@@ -53,10 +61,6 @@ int main(){
             printf("%s\n", tok -> message);
             //TODO: Put input into shmPtr and set flag to 0
             tok -> flag= 0;
-            if((tok = shmat (shmId, NULL,0)) == (void*) -1){
-                perror("Can't attach\n");
-                exit(1);
-            }
         }
     }
    printf("memory pointer: %lu \n", (unsigned long) shmPtr);
@@ -66,8 +70,8 @@ int main(){
 
 void sigHandler(int sigNum){
     printf(" recieved.  Shutting down...\n");
-    //TODO: detach the shared memory to prevent memory leakage.
-     if(shmdt(shmPtr) < 0 ){
+    //detach the shared memory to prevent memory leakage.
+     if(shmdt(tok) < 0 ){
         perror("error detaching\n");
         exit(1);
     }
